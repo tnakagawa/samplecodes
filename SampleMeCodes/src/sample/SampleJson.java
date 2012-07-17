@@ -2,9 +2,10 @@ package sample;
 
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -30,11 +31,19 @@ public class SampleJson {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-
+		Map map = new LinkedHashMap();
+		map.put("aaa", null);
+		map.put("bbb", Boolean.TRUE);
+		map.put("ccc", new Integer(10));
+		map.put("ddd", new Float(0.21));
+		map.put("eee", new Double(5.43));
+		map.put("fff", new int[]{1,2,3,4});
+		map.put("ggg", new Date());
+		System.out.println(object2json(map));
 	}
 
 	/**
-	 * オブジェクトをJSON変換
+	 * オブジェクトをJSON文字列へ変換
 	 * 
 	 * @param object 対象オブジェクト
 	 * @return JSON文字列
@@ -45,7 +54,7 @@ public class SampleJson {
 		if (object != null) {
 			// key一覧取得
 			Iterator it = object.keySet().iterator();
-			// objectは(左の中括弧)で始まる
+			// オブジェクトは、{(左の中括弧)で始まる
 			ret = "{";
 			// 初回フラグ
 			boolean flg = true;
@@ -57,16 +66,21 @@ public class SampleJson {
 			while (it.hasNext()) {
 				// 初回判定
 				if (flg) {
-					// 初回の場合、次回からは「, 」で連結
+					// 初回の場合
 					flg = false;
 				} else {
+					// 「, 」で連結
 					ret += ", ";
 				}
+				// 名前取得
 				string = it.next();
+				// 値取得
 				value = object.get(string);
+				// 名前＋「: 」＋値で設定
 				ret += string2json(string.toString()) + ": " + value2json(value);
 				
 			}
+			// オブジェクトは、} (右の中括弧)で終る
 			ret += "}";
 		}
 		return ret;
@@ -75,6 +89,7 @@ public class SampleJson {
 	/**
 	 * 文字列置換 {@link RestUtil#replaceAll(String, String, String, int)}
 	 * の開始位置を0としたもの
+	 * ※：CDCFPには、String#replaceAllが存在しないので、自作
 	 * 
 	 * @param string 対象文字列
 	 * @param target 置換元文字列
@@ -87,6 +102,7 @@ public class SampleJson {
 
 	/**
 	 * 文字列置換
+	 * ※：CDCFPには、String#replaceAllが存在しないので、自作
 	 * 
 	 * @param string 対象文字列
 	 * @param target 置換元文字列
@@ -114,8 +130,10 @@ public class SampleJson {
 	 */
 	private static String sanitize(String string) {
 		String ret = null;
+		// null判定
 		if (string != null) {
 			ret = string;
+			// サニタイズ
 			for (int i = 0; i < SANITIZES.length; i++) {
 				ret = replaceAll(ret, SANITIZES[i][0], SANITIZES[i][1]);
 			}
@@ -124,18 +142,18 @@ public class SampleJson {
 	}
 	
 	/**
-	 * 文字列をJSON変換
+	 * 文字列をJSON文字列へ変換
 	 * 
 	 * @param value 対象文字列
 	 * @return JSON文字列
 	 */
 	private static String string2json(String value) {
-		// 本当はサニタイズしないとダメ
+		// 文字列は、2重引用符で囲われてバックスラッシュエスケープされたゼロ文字以上のユニコード文字の集まりです。
 		return "\"" + sanitize(value) + "\"";
 	};
 
 	/**
-	 * オブジェクト→JSON変換
+	 * 値をJSON文字列へ変換
 	 * 
 	 * @param value 対象オブジェクト
 	 * @return JSON型文字列
@@ -143,34 +161,47 @@ public class SampleJson {
 	private static String value2json(Object value) {
 		String ret = null;
 		if (value == null) {
+			// nullの場合
 			ret = "null";
 		} else if (value instanceof Boolean
 				|| value instanceof Integer
 				|| value instanceof Double
 				|| value instanceof Float) {
+			// 数値、true、falseの場合
 			ret = value.toString();
 		} else if (value instanceof Map) {
-			// JSON Object
+			// オブジェクトの場合
 			ret = object2json((Map) value);
 		} else if (value.getClass().isArray()) {
-			// JSON array
+			// 配列の場合
+			// 配列は、[(左の大括弧)で始まる
 			ret = "[";
+			// 配列数分ループ
 			for (int i = 0; i < Array.getLength(value); i++) {
+				// 初回判定
 				if (i != 0) {
+					// 値は、，(コンマ)で区切られる
 					ret += ", ";
 				}
+				// 値追加
 				ret += value2json(Array.get(value, i));
 			}
+			// 配列は、](右の大括弧)で終わる
 			ret += "]";
-		} else if (value instanceof List) {
-			List list = (List) value;
-			Object[] objects = new Object[list.size()];
-			list.toArray(objects);
+		} else if (value instanceof Collection) {
+			// java.util.Collectionも配列として対応
+			// Collectionを配列に変更して、再帰呼び出し
+			Collection collection = (Collection) value;
+			Object[] objects = new Object[collection.size()];
+			collection.toArray(objects);
 			ret = value2json(objects);
 		} else if (value instanceof Date) {
-			SimpleDateFormat sdf = new SimpleDateFormat("yy/MM/dd HH:mm:ss.SSS");
+			// 日付の場合
+			// JSONでは日付の指定がない為、フォーマットは独自
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
 			ret = string2json(sdf.format((Date) value));
 		} else {
+			// 文字列、その他はすべて文字列扱いとする
 			ret = string2json(value.toString());
 		}
 		return ret;
