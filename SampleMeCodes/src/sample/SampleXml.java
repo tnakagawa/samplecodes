@@ -10,6 +10,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * JavaのMapオブジェクトをXMLに変換するユーティリティ
+ * 
+ * @author osgi
+ */
 public class SampleXml {
 
 	/** エンコード */
@@ -89,10 +94,14 @@ public class SampleXml {
 	 */
 	private static String object2xml(int indent, String head, Object value) {
 		StringBuffer xml = new StringBuffer();
+		
+		// インデント生成
 		StringBuffer tab = new StringBuffer();
 		for (int i = 0; i < indent; i++) {
 			tab.append("\t");
 		}
+		
+		// ヘッダ文字列生成
 		String headStr = head;
 		if (headStr.length() > 0) {
 			for (int i = 0; i < NUMS.length; i++) {
