@@ -38,7 +38,7 @@ public class SampleHttps implements X509TrustManager, HostnameVerifier {
 	
 	private void access() {
 		try {
-			URL url = new URL("https://172.19.58.123/examples/");
+			URL url = new URL("https://xxx.xxx.xxx.xxx/examples/");
 			HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
 			if (urlConnection instanceof HttpsURLConnection) {
 				SSLContext context = SSLContext.getInstance("TLS");
