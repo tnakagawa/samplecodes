@@ -15,7 +15,7 @@ import java.util.Map;
  * 
  * @author osgi
  */
-public class SampleXml {
+public class SampleXml2 {
 
 	/** エンコード */
 	public static final String ENCODE = "UTF-8";
@@ -38,9 +38,6 @@ public class SampleXml {
 	/** XMLヘッダ */
 	private static final String XML_HEAD = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" + CRLF;
 	
-	/** 配列要素タグ名 */
-	private static final String ARRAY_TAG_NAME = "item";
-
 	public static void main(String[] args) {
 		Map map = new LinkedHashMap();
 		map.put("aaa", null);
@@ -57,6 +54,7 @@ public class SampleXml {
 		map.put("hhh", list);
 		String[] strings = {"+++", "---", "***", "///"};
 		map.put("iii", strings);
+		map.put("jjj", null);
 		System.out.println(object2xml("root", map));
 	}
 	
@@ -133,13 +131,10 @@ public class SampleXml {
 			}
 			xml.append(tab.toString() + "</" + headStr + ">" + CRLF);
 		} else if (value.getClass().isArray()) {
-			// 配列の場合
-			xml.append(tab.toString() + "<" + headStr + " type=\"array\">" + CRLF);
-			// 要素を<item>として配列分ループ
+			// 配列の場合、配列分ループ
 			for (int i = 0; i < Array.getLength(value); i++) {
-				xml.append(object2xml(indent + 1, ARRAY_TAG_NAME, Array.get(value, i)));
+				xml.append(object2xml(indent, headStr, Array.get(value, i)));
 			}
-			xml.append(tab.toString() + "</" + headStr + ">" + CRLF);
 		} else if (value instanceof Collection) {
 			// java.util.Collectionも配列として対応
 			// Collectionを配列に変更して、再帰呼び出し
